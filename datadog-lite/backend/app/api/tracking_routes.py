@@ -4,7 +4,7 @@ from datetime import datetime
 
 from app.database import SessionLocal
 from app.models.event import Event
-from app.config import VALID_API_KEYS
+from app.config import VALID_PROJECTS
 
 router = APIRouter()
 
@@ -23,28 +23,35 @@ def track_event(
     db: Session = Depends(get_db),
     x_api_key: str = Header(None)
 ):
-    # 🔐 API KEY VALIDATION
-    if not x_api_key or x_api_key not in VALID_API_KEYS:
-        raise HTTPException(status_code=401, detail="Invalid API Key")
+    site_id = data.get("site_id")
 
-    # Optional: validate site_id matches API key
-    expected_site = VALID_API_KEYS[x_api_key]
-    if data.get("site_id") != expected_site:
-        raise HTTPException(status_code=403, detail="Site ID mismatch")
+    if not site_id:
+        raise HTTPException(status_code=400, detail="site_id is required")
+
+    if site_id not in VALID_PROJECTS:
+        raise HTTPException(status_code=403, detail="Unknown site_id")
+
+    expected_key = VALID_PROJECTS[site_id]["api_key"]
+
+    if not x_api_key or x_api_key != expected_key:
+        raise HTTPException(status_code=401, detail="Invalid API key")
 
     event = Event(
-        site_id=data.get("site_id"),
-        user_id=data.get("user_id"),
-        event_type=data.get("event_type"),
-        page=data.get("page"),
-        full_url=data.get("full_url"),
-        referrer=data.get("referrer"),
-        browser=data.get("browser"),
-        device=data.get("device"),
+        site_id=site_id,
+        user_id=data.get("user_id", "anonymous"),
+        event_type=data.get("event_type", "page_view"),
+        page=data.get("page", "/"),
+        full_url=data.get("full_url", ""),
+        referrer=data.get("referrer", "direct"),
+        browser=data.get("browser", ""),
+        device=data.get("device", ""),
         timestamp=datetime.utcnow()
     )
 
     db.add(event)
     db.commit()
 
-    return {"status": "tracked"}
+    return {
+        "status": "tracked",
+        "site_id": site_id
+    }

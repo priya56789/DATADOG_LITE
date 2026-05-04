@@ -96,3 +96,14 @@ def recent_events(site_id: str = None, db: Session = Depends(get_db)):
         }
         for e in events
     ]
+    from app.config import VALID_PROJECTS
+
+@router.get("/projects")
+def get_projects():
+    return [
+        {
+            "site_id": site_id,
+            "name": details["name"]
+        }
+        for site_id, details in VALID_PROJECTS.items()
+    ]
