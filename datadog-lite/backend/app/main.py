@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base
 
+# IMPORTANT: import all models before create_all
 from app.models.user import User
 from app.models.session import Session
 from app.models.event import Event
@@ -10,6 +11,8 @@ from app.models.event import Event
 from app.api.tracking_routes import router as tracking_router
 from app.api.dashboard_routes import router as dashboard_router
 
+# TEMP FIX: recreate database tables correctly
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -29,3 +32,8 @@ app.include_router(dashboard_router)
 @app.get("/")
 def root():
     return {"message": "Backend running successfully"}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
