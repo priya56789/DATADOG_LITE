@@ -4,7 +4,7 @@ from datetime import datetime
 
 from app.database import SessionLocal
 from app.models.event import Event
-from app.config import VALID_PROJECTS
+from app.models.project import Project
 
 router = APIRouter()
 
@@ -28,12 +28,15 @@ def track_event(
     if not site_id:
         raise HTTPException(status_code=400, detail="site_id is required")
 
-    if site_id not in VALID_PROJECTS:
-        raise HTTPException(status_code=403, detail="Unknown site_id")
+    if not x_api_key:
+        raise HTTPException(status_code=401, detail="API key missing")
 
-    expected_key = VALID_PROJECTS[site_id]["api_key"]
+    project = db.query(Project).filter(Project.site_id == site_id).first()
 
-    if not x_api_key or x_api_key != expected_key:
+    if not project:
+        raise HTTPException(status_code=403, detail="Project not found")
+
+    if project.api_key != x_api_key:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
     event = Event(
@@ -51,7 +54,4 @@ def track_event(
     db.add(event)
     db.commit()
 
-    return {
-        "status": "tracked",
-        "site_id": site_id
-    }
+    return {"status": "tracked", "site_id": site_id}
