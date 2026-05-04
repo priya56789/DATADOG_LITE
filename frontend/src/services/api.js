@@ -1,42 +1,33 @@
 const BASE_URL = "https://datadog-backend.onrender.com";
 
-export async function getStats() {
-  console.log("🚀 getStats() called");
-  console.log("📡 Calling API:", `${BASE_URL}/dashboard/stats`);
+export async function getStats(siteId = "") {
+  const url = siteId
+    ? `${BASE_URL}/dashboard/stats?site_id=${siteId}`
+    : `${BASE_URL}/dashboard/stats`;
 
-  try {
-    const response = await fetch(`${BASE_URL}/dashboard/stats`);
-
-    if (!response.ok) {
-      console.error("❌ HTTP Error:", response.status);
-      return null;
-    }
-
-    const data = await response.json();
-    console.log("📊 Data from backend:", data);
-    return data;
-  } catch (error) {
-    console.error("❌ Fetch failed:", error);
-    return null;
-  }
+  const res = await fetch(url);
+  return await res.json();
 }
 
-export async function getPageViews() {
-  console.log("📡 Calling API:", `${BASE_URL}/dashboard/page-views`);
+export async function getPageViews(siteId = "") {
+  const url = siteId
+    ? `${BASE_URL}/dashboard/page-views?site_id=${siteId}`
+    : `${BASE_URL}/dashboard/page-views`;
 
-  try {
-    const response = await fetch(`${BASE_URL}/dashboard/page-views`);
+  const res = await fetch(url);
+  return await res.json();
+}
 
-    if (!response.ok) {
-      console.error("❌ HTTP Error:", response.status);
-      return [];
-    }
+export async function getSites() {
+  const res = await fetch(`${BASE_URL}/dashboard/sites`);
+  return await res.json();
+}
 
-    const data = await response.json();
-    console.log("📈 Page views:", data);
-    return data;
-  } catch (error) {
-    console.error("❌ Fetch failed:", error);
-    return [];
-  }
+export async function getRecentEvents(siteId = "") {
+  const url = siteId
+    ? `${BASE_URL}/dashboard/recent-events?site_id=${siteId}`
+    : `${BASE_URL}/dashboard/recent-events`;
+
+  const res = await fetch(url);
+  return await res.json();
 }
