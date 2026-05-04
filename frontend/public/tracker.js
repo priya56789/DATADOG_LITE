@@ -1,8 +1,8 @@
 (function () {
   const API_URL = "https://datadog-backend.onrender.com/track";
 
-  const SITE_ID = window.SITE_ID || "client_website_1";
-  const API_KEY = window.DATADOG_LITE_API_KEY || "demo_api_key";
+  const SITE_ID = window.SITE_ID || "default_site";
+  const API_KEY = window.DATADOG_LITE_API_KEY || "";
 
   function getUserId() {
     let userId = localStorage.getItem("datadog_lite_user_id");
@@ -40,8 +40,8 @@
         device: getDeviceType()
       }),
     })
-      .then(res => console.log("Tracking response:", res.status))
-      .catch(err => console.log("Tracking error:", err));
+      .then((res) => console.log("Tracking response:", res.status))
+      .catch((err) => console.log("Tracking error:", err));
   }
 
   window.addEventListener("load", function () {
