@@ -17,6 +17,7 @@
 
   function getDeviceType() {
     const width = window.innerWidth;
+
     if (width <= 768) return "mobile";
     if (width <= 1024) return "tablet";
     return "desktop";
@@ -27,7 +28,7 @@
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-KEY": API_KEY
+        "X-API-KEY": API_KEY   // 🔴 IMPORTANT FIX
       },
       body: JSON.stringify({
         site_id: SITE_ID,
@@ -37,7 +38,7 @@
         full_url: window.location.href,
         referrer: document.referrer || "direct",
         browser: navigator.userAgent,
-        device: getDeviceType()
+        device: getDeviceType(),
       }),
     })
       .then((res) => console.log("Tracking response:", res.status))
