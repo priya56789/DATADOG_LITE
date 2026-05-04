@@ -1,5 +1,7 @@
 (function () {
-  const API_URL = "http://localhost:8000/track";
+  const API_URL = "https://datadog-backend.onrender.com/track";
+
+  const SITE_ID = window.SITE_ID || "default_site";
 
   function sendEvent(eventType, page) {
     fetch(API_URL, {
@@ -8,10 +10,11 @@
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        site_id: SITE_ID,
         event_type: eventType,
         page: page,
       }),
-    }).catch((err) => console.error("Tracking error:", err));
+    }).catch(err => console.log("Tracking error:", err));
   }
 
   // Track page load
