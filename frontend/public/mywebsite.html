@@ -1,22 +1,13 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>My Website</title>
-</head>
-      <script>
-  window.SITE_ID = "test_site_1";
-</script>
-
-<script src="https://datadog-lite.vercel.app/tracker.js"></script>
 <body>
 
 <h1>🚀 My Website</h1>
+<button>Click Me</button>
 
-<button onclick="alert('Clicked!')">Click Me</button>
-
-<!-- ADD HERE -->
 <script>
   window.SITE_ID = "client_website_1";
+  window.DATADOG_LITE_API_KEY = "demo_api_key";
 </script>
 
 <script src="https://datadog-lite.vercel.app/tracker.js"></script>
