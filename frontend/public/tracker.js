@@ -7,7 +7,7 @@
     let userId = localStorage.getItem("datadog_lite_user_id");
 
     if (!userId) {
-      userId = "user_" + Math.random().toString(36).substring(2) + Date.now();
+      userId = "user_" + Math.random().toString(36).substring(2) + "_" + Date.now();
       localStorage.setItem("datadog_lite_user_id", userId);
     }
 
@@ -16,8 +16,15 @@
 
   function getDeviceType() {
     const width = window.innerWidth;
-    if (width <= 768) return "mobile";
-    if (width <= 1024) return "tablet";
+
+    if (width <= 768) {
+      return "mobile";
+    }
+
+    if (width <= 1024) {
+      return "tablet";
+    }
+
     return "desktop";
   }
 
@@ -36,16 +43,15 @@
         referrer: document.referrer || "direct",
         browser: navigator.userAgent,
         device: getDeviceType(),
-        timestamp: new Date().toISOString(),
       }),
     }).catch((err) => console.log("Tracking error:", err));
   }
 
-  window.addEventListener("load", () => {
+  window.addEventListener("load", function () {
     sendEvent("page_view");
   });
 
-  document.addEventListener("click", () => {
+  document.addEventListener("click", function () {
     sendEvent("click");
   });
 })();
