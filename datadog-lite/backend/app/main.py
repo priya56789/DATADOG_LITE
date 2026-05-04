@@ -12,6 +12,8 @@ from app.models.project import Project
 from app.api.tracking_routes import router as tracking_router
 from app.api.dashboard_routes import router as dashboard_router
 from app.api.project_routes import router as project_router
+from app.api.project_routes import router as project_router
+app.include_router(project_router)
 
 # Create tables
 Base.metadata.create_all(bind=engine)
