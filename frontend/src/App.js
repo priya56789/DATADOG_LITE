@@ -1,61 +1,42 @@
 import React, { useEffect, useState } from "react";
-import { getStats } from "./services/api";
-
-import {
-  Chart as ChartJS,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-} from "chart.js";
-
-import { Bar } from "react-chartjs-2";
-
-ChartJS.register(BarElement, CategoryScale, LinearScale);
+import { getStats, getPageViews } from "./services/api";
 
 function App() {
   const [stats, setStats] = useState(null);
-  const [pageData, setPageData] = useState([]);
+  const [pages, setPages] = useState([]);
 
   useEffect(() => {
-    fetchData();
+    async function loadData() {
+      const statsData = await getStats();
+      const pageData = await getPageViews();
+
+      setStats(statsData);
+      setPages(pageData);
+    }
+
+    loadData();
   }, []);
 
-  const fetchData = async () => {
-    const statsData = await getStats();
-    setStats(statsData);
-
-    const res = await fetch("http://localhost:8000/dashboard/page-views");
-    const data = await res.json();
-    setPageData(data);
-  };
-
-  const chartData = {
-    labels: pageData.map((d) => d.page),
-    datasets: [
-      {
-        label: "Page Views",
-        data: pageData.map((d) => d.views),
-      },
-    ],
-  };
-
   return (
-    <div style={{ padding: "20px" }}>
+    <div>
       <h1>📊 Datadog Lite Dashboard</h1>
 
       {!stats ? (
         <p>Loading...</p>
       ) : (
         <>
-          <div style={{ display: "flex", gap: "20px" }}>
-            <div>Total Users: {stats.total_users}</div>
-            <div>Total Sessions: {stats.total_sessions}</div>
-            <div>Total Events: {stats.total_events}</div>
-          </div>
+          <p>Total Users: {stats.total_users}</p>
+          <p>Total Sessions: {stats.total_sessions}</p>
+          <p>Total Events: {stats.total_events}</p>
 
-          <h2 style={{ marginTop: "30px" }}>📈 Page Views</h2>
-
-          <Bar data={chartData} />
+          <h2>Page Views</h2>
+          <ul>
+            {pages.map((p, i) => (
+              <li key={i}>
+                {p.page} → {p.views}
+              </li>
+            ))}
+          </ul>
         </>
       )}
     </div>
