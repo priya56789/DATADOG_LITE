@@ -28,27 +28,24 @@ def track_event(
     if not site_id:
         raise HTTPException(status_code=400, detail="site_id is required")
 
-    project = db.query(Project).filter(Project.site_id == site_id).first()
-
-    if not project:
-        raise HTTPException(
-            status_code=403,
-            detail=f"Project not found for site_id: {site_id}"
-        )
-
     if not x_api_key:
         raise HTTPException(status_code=401, detail="API key missing")
 
-    if project.api_key.strip() != x_api_key.strip():
-        raise HTTPException(
-            status_code=401,
-            detail={
-                "message": "Invalid API key",
-                "received_key": x_api_key,
-                "expected_key": project.api_key,
-                "site_id": site_id
-            }
+    project = db.query(Project).filter(Project.site_id == site_id).first()
+
+    # AUTO-CREATE project if missing
+    if not project:
+        project = Project(
+            project_name=site_id,
+            site_id=site_id,
+            api_key=x_api_key
         )
+        db.add(project)
+        db.commit()
+        db.refresh(project)
+
+    if project.api_key != x_api_key:
+        raise HTTPException(status_code=401, detail="Invalid API key")
 
     event = Event(
         site_id=site_id,
@@ -65,22 +62,7 @@ def track_event(
     db.add(event)
     db.commit()
 
-    return {"status": "tracked", "site_id": site_id}
-
-
-@router.get("/debug-project/{site_id}")
-def debug_project(site_id: str, db: Session = Depends(get_db)):
-    project = db.query(Project).filter(Project.site_id == site_id).first()
-
-    if not project:
-        return {
-            "found": False,
-            "site_id": site_id,
-            "message": "No project found"
-        }
-
     return {
-        "found": True,
-        "site_id": project.site_id,
-        "api_key": project.api_key
+        "status": "tracked",
+        "site_id": site_id
     }
