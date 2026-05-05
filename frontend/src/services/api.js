@@ -31,3 +31,22 @@ export async function getRecentEvents(siteId = "") {
   const res = await fetch(url);
   return await res.json();
 }
+
+export async function createProject(projectName) {
+  const res = await fetch(`${BASE_URL}/projects/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      project_name: projectName,
+    }),
+  });
+
+  return await res.json();
+}
+
+export async function getProjects() {
+  const res = await fetch(`${BASE_URL}/projects/`);
+  return await res.json();
+}
