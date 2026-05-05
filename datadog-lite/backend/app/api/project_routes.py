@@ -23,6 +23,14 @@ def make_site_id(project_name: str):
     return site_id.strip("_")
 
 
+@router.get("/debug-version")
+def debug_version():
+    return {
+        "version": "new_project_routes_v2",
+        "message": "Render is using updated project_routes.py"
+    }
+
+
 @router.post("/create")
 def create_project(data: dict, db: Session = Depends(get_db)):
     project_name = data.get("project_name", "").strip()
@@ -36,6 +44,7 @@ def create_project(data: dict, db: Session = Depends(get_db)):
 
     if existing:
         api_key = existing.api_key
+        message = "Project already exists"
     else:
         api_key = secrets.token_hex(24)
 
@@ -49,6 +58,8 @@ def create_project(data: dict, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(project)
 
+        message = "Project created successfully"
+
     integration_script = f"""
 <script>
   window.SITE_ID = "{site_id}";
@@ -59,7 +70,8 @@ def create_project(data: dict, db: Session = Depends(get_db)):
 """
 
     return {
-        "message": "Project created successfully",
+        "debug_version": "new_project_routes_v2",
+        "message": message,
         "project_name": project_name,
         "site_id": site_id,
         "api_key": api_key,
