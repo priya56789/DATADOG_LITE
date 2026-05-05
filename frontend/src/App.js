@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   getStats,
   getPageViews,
@@ -19,16 +19,14 @@ function App() {
   const [projectName, setProjectName] = useState("");
   const [createdProject, setCreatedProject] = useState(null);
 
-  useEffect(() => {
-    loadSites();
-    loadProjects();
-  }, []);
+  const loadDashboard = useCallback(async () => {
+    const statsData = await getStats(selectedSite);
+    const pageData = await getPageViews(selectedSite);
+    const eventData = await getRecentEvents(selectedSite);
 
-  useEffect(() => {
-    loadDashboard();
-
-    const interval = setInterval(loadDashboard, 5000);
-    return () => clearInterval(interval);
+    setStats(statsData);
+    setPages(pageData || []);
+    setEvents(eventData || []);
   }, [selectedSite]);
 
   const loadSites = async () => {
@@ -41,15 +39,17 @@ function App() {
     setProjects(data || []);
   };
 
-  const loadDashboard = async () => {
-    const statsData = await getStats(selectedSite);
-    const pageData = await getPageViews(selectedSite);
-    const eventData = await getRecentEvents(selectedSite);
+  useEffect(() => {
+    loadSites();
+    loadProjects();
+  }, []);
 
-    setStats(statsData);
-    setPages(pageData || []);
-    setEvents(eventData || []);
-  };
+  useEffect(() => {
+    loadDashboard();
+
+    const interval = setInterval(loadDashboard, 5000);
+    return () => clearInterval(interval);
+  }, [loadDashboard]);
 
   const handleCreateProject = async () => {
     if (!projectName.trim()) {
@@ -66,7 +66,6 @@ function App() {
 
   const copyScript = () => {
     if (!createdProject?.integration_script) return;
-
     navigator.clipboard.writeText(createdProject.integration_script);
     alert("Integration script copied!");
   };
