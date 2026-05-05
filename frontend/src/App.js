@@ -19,24 +19,26 @@ function App() {
   const [projectName, setProjectName] = useState("");
   const [createdProject, setCreatedProject] = useState(null);
   const [error, setError] = useState("");
+  const [lastUpdated, setLastUpdated] = useState("");
 
   const loadDashboard = useCallback(async () => {
     try {
-      console.log("Loading dashboard for site:", selectedSite);
+      console.log("🔄 Loading dashboard for site:", selectedSite || "All");
 
       const statsData = await getStats(selectedSite);
       const pageData = await getPageViews(selectedSite);
       const eventData = await getRecentEvents(selectedSite);
 
-      console.log("Stats:", statsData);
-      console.log("Page views:", pageData);
-      console.log("Events:", eventData);
+      console.log("📊 Stats:", statsData);
+      console.log("📈 Page views:", pageData);
+      console.log("🧾 Events:", eventData);
 
       setStats(statsData || {});
       setPages(Array.isArray(pageData) ? pageData : []);
       setEvents(Array.isArray(eventData) ? eventData : []);
+      setLastUpdated(new Date().toLocaleTimeString());
     } catch (err) {
-      console.error("Dashboard load error:", err);
+      console.error("❌ Dashboard load error:", err);
       setError("Failed to load dashboard data");
     }
   }, [selectedSite]);
@@ -44,20 +46,20 @@ function App() {
   const loadSites = async () => {
     try {
       const data = await getSites();
-      console.log("Sites:", data);
+      console.log("🌍 Sites:", data);
       setSites(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Sites load error:", err);
+      console.error("❌ Sites load error:", err);
     }
   };
 
   const loadProjects = async () => {
     try {
       const data = await getProjects();
-      console.log("Projects:", data);
+      console.log("📁 Projects:", data);
       setProjects(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Projects load error:", err);
+      console.error("❌ Projects load error:", err);
     }
   };
 
@@ -69,7 +71,10 @@ function App() {
   useEffect(() => {
     loadDashboard();
 
-    const interval = setInterval(loadDashboard, 5000);
+    const interval = setInterval(() => {
+      loadDashboard();
+    }, 2000);
+
     return () => clearInterval(interval);
   }, [loadDashboard]);
 
@@ -82,11 +87,11 @@ function App() {
     }
 
     try {
-      console.log("Creating project:", projectName);
+      console.log("🚀 Creating project:", projectName);
 
       const data = await createProject(projectName);
 
-      console.log("Create project response:", data);
+      console.log("✅ Create project response:", data);
 
       if (!data) {
         setError("No response from backend");
@@ -98,12 +103,6 @@ function App() {
         return;
       }
 
-      if (!data.site_id || !data.api_key) {
-        setError("Invalid backend response. Check /projects/create response format.");
-        setCreatedProject(data);
-        return;
-      }
-
       setCreatedProject(data);
       setProjectName("");
 
@@ -111,7 +110,7 @@ function App() {
       await loadSites();
       await loadDashboard();
     } catch (err) {
-      console.error("Create project error:", err);
+      console.error("❌ Create project error:", err);
       setError("Error creating project. Check browser console.");
     }
   };
@@ -126,7 +125,7 @@ function App() {
       await navigator.clipboard.writeText(createdProject.integration_script);
       alert("Integration script copied!");
     } catch (err) {
-      console.error("Copy failed:", err);
+      console.error("❌ Copy failed:", err);
       alert("Copy failed. Select and copy manually.");
     }
   };
@@ -134,7 +133,8 @@ function App() {
   return (
     <div style={{ padding: "24px", fontFamily: "Arial" }}>
       <h1>📊 Datadog Lite Dashboard</h1>
-      <p>🔴 Auto-refresh enabled every 5 seconds</p>
+      <p>🔴 Auto-refresh enabled every 2 seconds</p>
+      <p>Last updated: {lastUpdated || "Loading..."}</p>
 
       {error && (
         <div style={errorStyle}>
@@ -163,7 +163,9 @@ function App() {
 
             <p>
               <b>Project:</b>{" "}
-              {createdProject.project_name || createdProject?.project?.project_name || "Not available"}
+              {createdProject.project_name ||
+                createdProject?.project?.project_name ||
+                "Not available"}
             </p>
 
             <p>
@@ -233,7 +235,14 @@ function App() {
         <p>Loading...</p>
       ) : (
         <>
-          <div style={{ display: "flex", gap: "20px", marginBottom: "30px", flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "20px",
+              marginBottom: "30px",
+              flexWrap: "wrap",
+            }}
+          >
             <div style={cardStyle}>
               👤 Users
               <br />
