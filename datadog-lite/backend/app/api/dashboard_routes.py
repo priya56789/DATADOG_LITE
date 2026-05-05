@@ -121,3 +121,21 @@ def active_users(site_id: str = None, db: Session = Depends(get_db)):
     return {
         "active_users": active_count or 0
     }
+@router.get("/events-over-time")
+def events_over_time(site_id: str = None, db: Session = Depends(get_db)):
+    from sqlalchemy import func
+
+    query = db.query(
+        func.strftime('%H:%M', Event.timestamp),
+        func.count(Event.id)
+    )
+
+    if site_id:
+        query = query.filter(Event.site_id == site_id)
+
+    data = query.group_by(func.strftime('%H:%M', Event.timestamp)).all()
+
+    return [
+        {"time": t, "count": c}
+        for t, c in data
+    ]
