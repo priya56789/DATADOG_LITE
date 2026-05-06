@@ -23,18 +23,34 @@ function App() {
 
   const BACKEND_DOCS_URL = "https://datadog-backend.onrender.com/docs";
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const siteId = params.get("site_id");
+
+    if (siteId) {
+      console.log("🌍 Site ID from URL:", siteId);
+      setSelectedSite(siteId);
+    }
+  }, []);
+
   const loadDashboard = useCallback(async () => {
     try {
+      console.log("🔄 Loading dashboard for site:", selectedSite || "All Websites");
+
       const statsData = await getStats(selectedSite);
       const pageData = await getPageViews(selectedSite);
       const eventData = await getRecentEvents(selectedSite);
+
+      console.log("📊 Stats:", statsData);
+      console.log("📈 Page Views:", pageData);
+      console.log("🧾 Recent Events:", eventData);
 
       setStats(statsData || {});
       setPages(Array.isArray(pageData) ? pageData : []);
       setEvents(Array.isArray(eventData) ? eventData : []);
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (err) {
-      console.error("Dashboard load error:", err);
+      console.error("❌ Dashboard load error:", err);
       setError("Failed to load dashboard data");
     }
   }, [selectedSite]);
@@ -42,18 +58,20 @@ function App() {
   const loadSites = async () => {
     try {
       const data = await getSites();
+      console.log("🌐 Sites:", data);
       setSites(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Sites load error:", err);
+      console.error("❌ Sites load error:", err);
     }
   };
 
   const loadProjects = async () => {
     try {
       const data = await getProjects();
+      console.log("📁 Projects:", data);
       setProjects(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Projects load error:", err);
+      console.error("❌ Projects load error:", err);
     }
   };
 
@@ -64,7 +82,11 @@ function App() {
 
   useEffect(() => {
     loadDashboard();
-    const interval = setInterval(loadDashboard, 2000);
+
+    const interval = setInterval(() => {
+      loadDashboard();
+    }, 2000);
+
     return () => clearInterval(interval);
   }, [loadDashboard]);
 
@@ -77,8 +99,11 @@ function App() {
     }
 
     try {
+      console.log("🚀 Creating project:", projectName);
+
       const data = await createProject(projectName);
-      console.log("Create project response:", data);
+
+      console.log("✅ Create project response:", data);
 
       if (!data) {
         setError("No response from backend");
@@ -93,14 +118,17 @@ function App() {
       setCreatedProject(data);
       setProjectName("");
 
+      if (data.site_id) {
+        setSelectedSite(data.site_id);
+      }
+
       await loadProjects();
       await loadSites();
       await loadDashboard();
 
-      // ✅ Auto-open backend docs/dashboard after project creation
       window.open(BACKEND_DOCS_URL, "_blank");
     } catch (err) {
-      console.error("Create project error:", err);
+      console.error("❌ Create project error:", err);
       setError("Error creating project. Check browser console.");
     }
   };
@@ -115,7 +143,7 @@ function App() {
       await navigator.clipboard.writeText(createdProject.integration_script);
       alert("Integration script copied!");
     } catch (err) {
-      console.error("Copy failed:", err);
+      console.error("❌ Copy failed:", err);
       alert("Copy failed. Select and copy manually.");
     }
   };
