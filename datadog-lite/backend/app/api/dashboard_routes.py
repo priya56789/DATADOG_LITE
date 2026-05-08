@@ -1,0 +1,141 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from datetime import datetime, timedelta
+
+from app.database import SessionLocal
+from app.models.event import Event
+
+router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@router.get("/stats")
+def get_stats(site_id: str = None, db: Session = Depends(get_db)):
+    query = db.query(Event)
+
+    if site_id:
+        query = query.filter(Event.site_id == site_id)
+
+    total_events = query.count()
+
+    total_users = (
+        db.query(func.count(func.distinct(Event.user_id)))
+        .filter(Event.site_id == site_id if site_id else True)
+        .scalar()
+    )
+
+    total_page_views = (
+        db.query(Event)
+        .filter(Event.event_type == "page_view")
+        .filter(Event.site_id == site_id if site_id else True)
+        .count()
+    )
+
+    total_clicks = (
+        db.query(Event)
+        .filter(Event.event_type == "click")
+        .filter(Event.site_id == site_id if site_id else True)
+        .count()
+    )
+
+    return {
+        "total_users": total_users or 0,
+        "total_events": total_events or 0,
+        "total_page_views": total_page_views or 0,
+        "total_clicks": total_clicks or 0
+    }
+
+
+@router.get("/page-views")
+def page_views(site_id: str = None, db: Session = Depends(get_db)):
+    query = (
+        db.query(Event.page, func.count(Event.id))
+        .filter(Event.event_type == "page_view")
+    )
+
+    if site_id:
+        query = query.filter(Event.site_id == site_id)
+
+    data = query.group_by(Event.page).all()
+
+    return [{"page": page, "views": count} for page, count in data]
+
+
+@router.get("/sites")
+def get_sites(db: Session = Depends(get_db)):
+    data = db.query(Event.site_id).distinct().all()
+    return [{"site_id": site[0]} for site in data if site[0]]
+
+
+@router.get("/recent-events")
+def recent_events(site_id: str = None, db: Session = Depends(get_db)):
+    query = db.query(Event)
+
+    if site_id:
+        query = query.filter(Event.site_id == site_id)
+
+    events = query.order_by(Event.timestamp.desc()).limit(20).all()
+
+    return [
+        {
+            "site_id": e.site_id,
+            "user_id": e.user_id,
+            "event_type": e.event_type,
+            "page": e.page,
+            "full_url": e.full_url,
+            "referrer": e.referrer,
+            "device": e.device,
+            "timestamp": e.timestamp
+        }
+        for e in events
+    ]
+
+
+@router.get("/projects")
+def get_projects_from_events(db: Session = Depends(get_db)):
+    data = db.query(Event.site_id).distinct().all()
+    return [{"site_id": site[0]} for site in data if site[0]]
+
+
+@router.get("/active-users")
+def active_users(site_id: str = None, db: Session = Depends(get_db)):
+    five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+
+    query = db.query(Event).filter(Event.timestamp >= five_minutes_ago)
+
+    if site_id:
+        query = query.filter(Event.site_id == site_id)
+
+    active_count = query.with_entities(
+        func.count(func.distinct(Event.user_id))
+    ).scalar()
+
+    return {
+        "active_users": active_count or 0
+    }
+@router.get("/events-over-time")
+def events_over_time(site_id: str = None, db: Session = Depends(get_db)):
+    from sqlalchemy import func
+
+    query = db.query(
+        func.strftime('%H:%M', Event.timestamp),
+        func.count(Event.id)
+    )
+
+    if site_id:
+        query = query.filter(Event.site_id == site_id)
+
+    data = query.group_by(func.strftime('%H:%M', Event.timestamp)).all()
+
+    return [
+        {"time": t, "count": c}
+        for t, c in data
+    ]
